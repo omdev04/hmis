@@ -136,6 +136,32 @@ echo "✅ Database connected!"
 # ── Run Migrations ───────────────────────────────────
 echo "🗄️  Running database migrations..."
 php artisan migrate --force --no-interaction
+
+# ── Seed Database (First deployment only) ─────────────
+echo "🌱 Checking if database needs seeding..."
+user_count=$(php -r "
+    try {
+        \$pdo = new PDO(
+            'mysql:host=' . getenv('DB_HOST') . ';port=' . (getenv('DB_PORT') ?: 3306) . ';dbname=' . getenv('DB_DATABASE'),
+            getenv('DB_USERNAME'),
+            getenv('DB_PASSWORD'),
+            [PDO::MYSQL_ATTR_SSL_CA => getenv('MYSQL_ATTR_SSL_CA') ?: '/etc/ssl/certs/ca-certificates.crt',
+             PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false]
+        );
+        \$stmt = \$pdo->query('SELECT COUNT(*) FROM users');
+        echo \$stmt ? \$stmt->fetchColumn() : '0';
+    } catch (Exception \$e) {
+        echo '0';
+    }
+")
+
+if [ "$user_count" = "0" ] || [ -z "$user_count" ]; then
+    echo "🌱 Database is empty! Running seeders..."
+    php artisan db:seed --force
+else
+    echo "🌱 Database already contains data (users: $user_count). Skipping seed."
+fi
+
 # ── Production Cache ─────────────────────────────────
 echo "⚡ Caching for production..."
 php artisan config:cache
