@@ -136,12 +136,11 @@ echo "✅ Database connected!"
 # ── Run Migrations ───────────────────────────────────
 echo "🗄️  Running database migrations..."
 php artisan migrate --force --no-interaction
-
 # ── Production Cache ─────────────────────────────────
 echo "⚡ Caching for production..."
 php artisan config:cache
 php artisan route:cache
-php artisan view:cache
+php artisan view:clear
 
 # ── Start Supervisor (Queue Worker) ──────────────────
 echo "📋 Starting supervisor (queue worker)..."
