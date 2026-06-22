@@ -98,7 +98,7 @@ RUN composer install \
     --prefer-dist
 
 # ── Build Frontend Assets ───────────────────────────
-RUN npm ci && npm run prod && rm -rf node_modules
+RUN npm install --legacy-peer-deps && npm run prod && rm -rf node_modules
 
 # ── Entrypoint ──────────────────────────────────────
 COPY docker/scripts/render-start.sh /render-start.sh
