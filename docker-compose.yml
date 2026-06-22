@@ -1,0 +1,162 @@
+# ====================================================
+# InfyHMS - Docker Compose
+# Services: App (PHP+Apache), MySQL, Redis, phpMyAdmin
+# ====================================================
+
+version: '3.9'
+
+networks:
+  infyhms_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+  app_storage:
+    driver: local
+
+services:
+
+  # ──────────────────────────────────────────
+  # 🏥 Laravel Application (PHP 8.1 + Apache)
+  # ──────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: infyhms_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - app_storage:/var/www/html/storage
+    ports:
+      - "${APP_PORT:-8080}:80"
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - APP_DEBUG=${APP_DEBUG:-false}
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE:-hms}
+      - DB_USERNAME=${DB_USERNAME:-hms_user}
+      - DB_PASSWORD=${DB_PASSWORD:-hms_secret}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CACHE_DRIVER=redis
+      - SESSION_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - infyhms_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ──────────────────────────────────────────
+  # 🗄️ MySQL Database
+  # ──────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: infyhms_mysql
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_secret_123}
+      MYSQL_DATABASE: ${DB_DATABASE:-hms}
+      MYSQL_USER: ${DB_USERNAME:-hms_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-hms_secret}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "${DB_EXTERNAL_PORT:-3306}:3306"
+    networks:
+      - infyhms_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-root_secret_123}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ──────────────────────────────────────────
+  # 🔴 Redis (Cache + Sessions + Queues)
+  # ──────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: infyhms_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_EXTERNAL_PORT:-6379}:6379"
+    networks:
+      - infyhms_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────────────────
+  # 🖥️ phpMyAdmin (Database GUI)
+  # ──────────────────────────────────────────
+  phpmyadmin:
+    image: phpmyadmin:5.2
+    container_name: infyhms_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: ${DB_ROOT_PASSWORD:-root_secret_123}
+      UPLOAD_LIMIT: 300M
+    ports:
+      - "${PMA_PORT:-8081}:80"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - infyhms_network
+
+  # ──────────────────────────────────────────
+  # 📋 Laravel Queue Worker
+  # ──────────────────────────────────────────
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: infyhms_queue
+    restart: unless-stopped
+    working_dir: /var/www/html
+    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
+    volumes:
+      - ./:/var/www/html
+      - app_storage:/var/www/html/storage
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE:-hms}
+      - DB_USERNAME=${DB_USERNAME:-hms_user}
+      - DB_PASSWORD=${DB_PASSWORD:-hms_secret}
+      - REDIS_HOST=redis
+      - QUEUE_CONNECTION=redis
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - infyhms_network

@@ -1,0 +1,48 @@
+# ====================================================
+# .dockerignore — InfyHMS Render Deployment
+# ====================================================
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker files (Render khud handle karta hai)
+docker-compose*.yml
+.docker.env
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.sublime-*
+
+# Node modules (Docker build mein re-install hoga)
+node_modules/
+
+# PHP dev tools
+_ide_helper.php
+.styleci.yml
+.shift
+.editorconfig
+phpunit.xml
+
+# Logs
+storage/logs/*.log
+
+# Compiled assets cache — rebuilt during Docker build
+public/hot
+
+# Storage uploads (Render ephemeral — use S3/Cloudinary for production)
+# storage/app/public/*
+
+# Test files
+tests/
+
+# Large zip files (vendor already exists, bas backup ke liye hain)
+*.zip
+
+# README (Docker mein nahi chahiye)
+DOCKER_README.md

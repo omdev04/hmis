@@ -1,0 +1,156 @@
+# ====================================================
+# render.yaml — InfyHMS Render Blueprint
+# Deploy karo: https://dashboard.render.com/new/blueprint
+# ====================================================
+
+services:
+  # ── Laravel Web Application ───────────────────────
+  - type: web
+    name: infyhms-app
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+
+    # Render Free tier: 512MB RAM, shared CPU
+    # Paid Starter: 512MB | Standard: 2GB
+    plan: free
+
+    # Health check — Render yahi check karta hai
+    healthCheckPath: /
+
+    # Auto-deploy on git push
+    autoDeploy: true
+
+    # Environment Variables — Render Dashboard mein bhi set kar sakte ho
+    envVars:
+      # ── App ────────────────────────────────────────
+      - key: APP_NAME
+        value: InfyHMS
+
+      - key: APP_ENV
+        value: production
+
+      - key: APP_DEBUG
+        value: "false"
+
+      # APP_KEY — Render generate karega (sync: true)
+      - key: APP_KEY
+        generateValue: true
+
+      # APP_URL — Render automatically set karta hai
+      - key: APP_URL
+        fromService:
+          type: web
+          name: infyhms-app
+          property: host
+
+      # ── Database (PlanetScale) ─────────────────────
+      # In values Render Dashboard mein manually set karo
+      # (PlanetScale se milenge)
+      - key: DB_CONNECTION
+        value: mysql
+
+      - key: DB_HOST
+        sync: false        # ← Dashboard mein set karo
+
+      - key: DB_PORT
+        value: "3306"
+
+      - key: DB_DATABASE
+        sync: false        # ← Dashboard mein set karo
+
+      - key: DB_USERNAME
+        sync: false        # ← Dashboard mein set karo
+
+      - key: DB_PASSWORD
+        sync: false        # ← Dashboard mein set karo
+
+      # PlanetScale SSL (required)
+      - key: MYSQL_ATTR_SSL_CA
+        value: /etc/ssl/certs/ca-certificates.crt
+
+      # ── Cache & Session ────────────────────────────
+      - key: CACHE_DRIVER
+        value: file
+
+      - key: SESSION_DRIVER
+        value: file
+
+      - key: QUEUE_CONNECTION
+        value: sync
+
+      # ── Logging (Render Dashboard mein dikhta hai) ─
+      - key: LOG_CHANNEL
+        value: errorlog
+
+      - key: LOG_LEVEL
+        value: error
+
+      # ── Laravel Specific ───────────────────────────
+      - key: FILESYSTEM_DISK
+        value: public
+
+      - key: MEDIA_DISK
+        value: public
+
+      - key: VERSION_NUMBER
+        value: "true"
+
+      - key: UPGRADE_MODE
+        value: "false"
+
+      - key: COOKIE_CONSENT_ENABLED
+        value: "true"
+
+      - key: DEBUGBAR_ENABLED
+        value: "false"
+
+      - key: QUERY_DETECTOR_ENABLED
+        value: "false"
+
+      # ── Mail (Dashboard mein set karo) ─────────────
+      - key: MAIL_MAILER
+        value: smtp
+
+      - key: MAIL_HOST
+        sync: false
+
+      - key: MAIL_PORT
+        value: "587"
+
+      - key: MAIL_USERNAME
+        sync: false
+
+      - key: MAIL_PASSWORD
+        sync: false
+
+      - key: MAIL_ENCRYPTION
+        value: tls
+
+      - key: MAIL_FROM_ADDRESS
+        sync: false
+
+      - key: MAIL_FROM_NAME
+        value: InfyHMS
+
+      # ── Optional (Dashboard mein set karo) ─────────
+      - key: STRIPE_KEY
+        sync: false
+
+      - key: STRIPE_SECRET_KEY
+        sync: false
+
+      - key: NOCAPTCHA_SECRET
+        sync: false
+
+      - key: NOCAPTCHA_SITEKEY
+        sync: false
+
+      - key: TWILIO_SID
+        sync: false
+
+      - key: TWILIO_TOKEN
+        sync: false
+
+      - key: TWILIO_FROM_NUMBER
+        sync: false
