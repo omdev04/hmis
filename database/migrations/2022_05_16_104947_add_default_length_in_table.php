@@ -14,12 +14,6 @@ return new class extends Migration
         Schema::table('media', function (Blueprint $table) {
             $table->string('model_type', 160)->change();
         });
-        Schema::table('model_has_roles', function (Blueprint $table) {
-            $table->string('model_type', 160)->change();
-        });
-        Schema::table('model_has_permissions', function (Blueprint $table) {
-            $table->string('model_type', 160)->unique()->change();
-        });
         Schema::table('users', function (Blueprint $table) {
             $table->string('stripe_id', 100)->change();
             $table->string('card_brand', 100);
