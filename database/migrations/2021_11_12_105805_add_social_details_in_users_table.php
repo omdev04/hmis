@@ -13,8 +13,14 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->string('facebook_url', 100)->after('remember_token')->nullable();
+        });
+        Schema::table('users', function (Blueprint $table) {
             $table->string('twitter_url', 100)->after('facebook_url')->nullable();
+        });
+        Schema::table('users', function (Blueprint $table) {
             $table->string('instagram_url', 100)->after('twitter_url')->nullable();
+        });
+        Schema::table('users', function (Blueprint $table) {
             $table->string('linkedIn_url', 100)->after('instagram_url')->nullable();
         });
     }

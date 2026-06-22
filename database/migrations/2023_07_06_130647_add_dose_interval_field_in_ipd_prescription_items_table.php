@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::table('ipd_prescription_items', function (Blueprint $table) {
             $table->integer('dose_interval')->after('dosage');
+        });
+        Schema::table('ipd_prescription_items', function (Blueprint $table) {
             $table->string('day')->after('dose_interval')->nullable();
         });
     }
