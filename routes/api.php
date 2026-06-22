@@ -40,10 +40,10 @@ use Illuminate\Support\Facades\Route;
 Route::post('/patient-register', [RegistrationController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
 Route::post('/forgot-password',
-    [AuthController::class, 'sendPasswordResetLinkEmail'])->middleware('throttle:5,1')->name('password.email');
+    [AuthController::class, 'sendPasswordResetLinkEmail'])->middleware('throttle:5,1')->name('api.password.email');
 Route::post('/password',
     [AuthController::class, 'resetPassword'])->middleware('throttle:5,1')->name('set.password');
-Route::post('/reset-password', [AuthController::class, 'changePassword'])->name('password.reset');
+Route::post('/reset-password', [AuthController::class, 'changePassword'])->name('api.password.reset');
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
 
